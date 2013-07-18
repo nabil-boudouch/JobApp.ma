@@ -24,7 +24,7 @@
       {% if entity.logo %}
         <div class="logo">
           <a href="{{ entity.url }}">
-            <img src="/uploads/jobs/{{ entity.logo }}"
+            <img src="{{ asset(entity.getWebPath()) }}"
               alt="{{ entity.company }} logo" />
           </a>
         </div>

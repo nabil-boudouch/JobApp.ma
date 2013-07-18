@@ -45,6 +45,7 @@ class Job {
      * @var string
      *
      * @ORM\Column(name="logo", type="string", length=255, nullable=true)
+     * 
      */
     private $logo;
 
@@ -148,7 +149,11 @@ class Job {
     private $category;
 
     /**
-     * @Assert\Image()
+     * 
+     * @Assert\Image(
+     *     maxWidth = 400,
+     *     maxHeight = 400
+     * )
      */
     public $file;
 
