@@ -29,7 +29,7 @@ class Job {
      *
      * @ORM\Column(name="type", type="string", length=255, nullable=true)
      * @Assert\NotBlank()
-     *  @Assert\Choice(callback = "getTypeValues")
+     * @Assert\Choice(callback = "getTypeValues")
      */
     private $type;
 
@@ -432,6 +432,7 @@ class Job {
     }
 
     /**
+     * 
      * Get expiresAt
      *
      *      * @return \DateTime 
@@ -647,4 +648,17 @@ public function publish()
 
         return true;
     }
+public function cleanup($days)
+{
+  $query = $this->createQueryBuilder('j')
+    ->delete()
+    ->where('j.isActivated IS NULL')
+    ->andWhere('j.createdAt < :createdAt')     
+    ->setParameter('createdAt',  date('Y-m-d', time() - 86400 * $days))
+    ->getQuery();
+ 
+  return $query->execute();
 }
+    
+    
+        }

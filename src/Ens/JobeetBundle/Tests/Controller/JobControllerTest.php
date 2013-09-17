@@ -6,6 +6,13 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class JobControllerTest extends WebTestCase
 {
+    public function testJobForm()
+{
+  $client = static::createClient();
+ 
+  $crawler = $client->request('GET', '/job/new');
+  $this->assertEquals('Ens\JobeetBundle\Controller\JobController::newAction', $client->getRequest()->attributes->get('_controller'));
+}
     /*
     public function testCompleteScenario()
     {
