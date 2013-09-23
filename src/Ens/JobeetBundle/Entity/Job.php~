@@ -29,7 +29,7 @@ class Job {
      *
      * @ORM\Column(name="type", type="string", length=255, nullable=true)
      * @Assert\NotBlank()
-     * @Assert\Choice(choices = {"full-time", "part-time", "freelance" } )
+     * @Assert\Choice(callback = "getTypeValues")
      */
     private $type;
 
@@ -38,7 +38,6 @@ class Job {
      *
      * @ORM\Column(name="company", type="string", length=255)
      * @Assert\NotBlank()
-
      */
     private $company;
 
@@ -46,6 +45,7 @@ class Job {
      * @var string
      *
      * @ORM\Column(name="logo", type="string", length=255, nullable=true)
+     * 
      */
     private $logo;
 
@@ -115,16 +115,15 @@ class Job {
      *
      * @ORM\Column(name="email", type="string", length=255 )
      * @Assert\NotBlank()
-     * @Assert\Email( 
-     *     message ="The email '{{ value }}' is not valid a valid email.",
-     *     checkMX = true   
-     * )
+     * @Assert\email( 
+     *     message ="The email '{{ value }}' is not valid a valid email.")
+     *    
+     * 
      */
     private $email;
 
     /**
      * @var \DateTime
-     *
      * @ORM\Column(name="expires_at", type="datetime")
      */
     private $expiresAt;
@@ -150,7 +149,11 @@ class Job {
     private $category;
 
     /**
-     * @Assert\Image()
+     * 
+     * @Assert\Image(
+     *     maxWidth = 400,
+     *     maxHeight = 400
+     * )
      */
     public $file;
 
@@ -429,6 +432,7 @@ class Job {
     }
 
     /**
+     * 
      * Get expiresAt
      *
      *      * @return \DateTime 
@@ -444,6 +448,7 @@ class Job {
      * @return 
      * @ORM\prePersist
      */
+    
     public function setCreatedAt($createdAt) {
         $this->createdAt = new \DateTime();
 
@@ -454,6 +459,7 @@ class Job {
      * 
      * @ORM\prePersist 
      */
+    
     public function setCreatedAtValue() {
         return $this;
     }
@@ -462,6 +468,7 @@ class Job {
      * 
      * @ORM\prePersist 
      */
+    
     public function setExpiresAtValue() {
         if (!$this->getExpiresAt()) {
             $now = $this->getCreatedAt() ? $this->getCreatedAt()->format('U') : time();
@@ -579,7 +586,7 @@ class Job {
     /**
      * 
      * @ORM\postPersist
-     *  
+     * @ORM\postUpdate 
      */
     public function upload() {
         if (null === $this->file) {
@@ -624,4 +631,97 @@ public function getDaysBeforeExpires()
 {
   return ceil(($this->getExpiresAt()->format('U') - time()) / 86400);
 }
+
+public function publish()
+    {
+        $this->setIsActivated(true);
+    }
+
+    public function extend()
+    {
+        if (!$this->expiresSoon())
+        {
+            return false;
+        }
+
+        $this->expiresAt = new \DateTime(date('Y-m-d H:i:s', time() + 86400 * 30));
+
+        return true;
+    }
+public function cleanup($days)
+{
+  $query = $this->createQueryBuilder('j')
+    ->delete()
+    ->where('j.isActivated IS NULL')
+    ->andWhere('j.createdAt < :createdAt')     
+    ->setParameter('createdAt',  date('Y-m-d', time() - 86400 * $days))
+    ->getQuery();
+ 
+  return $query->execute();
 }
+
+static public function getLuceneIndex()
+    {
+        if (file_exists($index = self::getLuceneIndexFile())) {
+            return \Zend_Search_Lucene::open($index);
+        }
+ 
+        return \Zend_Search_Lucene::create($index);
+    }
+ 
+    static public function getLuceneIndexFile()
+    {
+        return __DIR__.'/../../../../web/data/job.index';
+    }
+
+
+    /**
+     * @ORM\postPersist
+     * @ORM\postUpdate
+     */
+    public function updateLuceneIndex()
+    {
+        $index = self::getLuceneIndex();
+ 
+        // remove existing entries
+        foreach ($index->find('pk:'.$this->getId()) as $hit)
+        {
+          $index->delete($hit->id);
+        }
+ 
+        // don't index expired and non-activated jobs
+        if ($this->isExpired() || !$this->getIsActivated())
+        {
+          return;
+        }
+ 
+        $doc = new \Zend_Search_Lucene_Document();
+ 
+        // store job primary key to identify it in the search results
+        $doc->addField(\Zend_Search_Lucene_Field::Keyword('pk', $this->getId()));
+ 
+        // index job fields
+        $doc->addField(\Zend_Search_Lucene_Field::UnStored('position', $this->getPosition(), 'utf-8'));
+        $doc->addField(\Zend_Search_Lucene_Field::UnStored('company', $this->getCompany(), 'utf-8'));
+        $doc->addField(\Zend_Search_Lucene_Field::UnStored('location', $this->getLocation(), 'utf-8'));
+        $doc->addField(\Zend_Search_Lucene_Field::UnStored('description', $this->getDescription(), 'utf-8'));
+ 
+        // add job to the index
+        $index->addDocument($doc);
+        $index->commit();
+    }
+    
+    /**
+     * 
+     * @ORM\postRemove
+     */
+     public function deleteLuceneIndex()
+    {
+        $index = self::getLuceneIndex();
+ 
+        foreach ($index->find('pk:'.$this->getId()) as $hit) {
+            $index->delete($hit->id);
+        }
+    }
+    
+    }

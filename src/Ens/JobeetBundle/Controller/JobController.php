@@ -301,6 +301,20 @@ private function createExtendForm($token)
     ->getForm()
   ;
 }
+
+public function searchAction()
+    {
+        $em = $this->getDoctrine()->getManager();
+        $query = $this->getRequest()->get('query');
+ 
+        if(!$query) {
+            return $this->redirect($this->generateUrl('ens_job'));
+        }
+ 
+        $jobs = $em->getRepository('EnsJobeetBundle:Job')->getForLuceneQuery($query);
+ 
+        return $this->render('EnsJobeetBundle:Job:search.html.twig', array('jobs' => $jobs));
+    }
  //
 //
 //
