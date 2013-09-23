@@ -302,16 +302,27 @@ private function createExtendForm($token)
   ;
 }
 
-public function searchAction()
-    {
+public function searchAction(Request $request)
+ {
         $em = $this->getDoctrine()->getManager();
         $query = $this->getRequest()->get('query');
  
         if(!$query) {
-            return $this->redirect($this->generateUrl('ens_job'));
+            if(!$request->isXmlHttpRequest()) {
+                return $this->redirect($this->generateUrl('ens_job'));
+            } else {
+                return new Response('No results.');
+            }
         }
  
         $jobs = $em->getRepository('EnsJobeetBundle:Job')->getForLuceneQuery($query);
+ 
+        if($request->isXmlHttpRequest()) {
+            if('*' == $query || !$jobs || $query == '') {
+                return new Response('No results.');
+            }
+            return $this->render('EnsJobeetBundle:Job:list.html.twig', array('jobs' => $jobs));
+        }
  
         return $this->render('EnsJobeetBundle:Job:search.html.twig', array('jobs' => $jobs));
     }

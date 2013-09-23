@@ -11,6 +11,8 @@
             <link rel="stylesheet" href="{{ asset('bundles/ensjobeet/css/main.css') }}" type="text/css" media="all" />
     {% endblock %}
     {% block javascripts %}
+             <script type="text/javascript" src="{{ asset('bundles/ensjobeet/js/jquery-1.10.2.min.js') }}"></script>
+             <script type="text/javascript" src="{{ asset('bundles/ensjobeet/js/search.js') }}"></script>
     {% endblock %}
             <link rel="shortcut icon" href="{{ asset('bundles/ensjobeet/images/favicon.ico') }}" />
         </head>
@@ -36,6 +38,8 @@
                                 <form action="{{ path('ens_job_search') }}" method="get">
                                     <input type="text" name="query" value="{{ app.request.get('query') }}" id="search_keywords" />
                                     <input type="submit" value="search" />
+                                    
+                                    <img id="loader" src="{{ asset('bundles/ensjobeet/images/loader.gif') }}" style="vertical-align: middle; display: none" />
                                     <div class="help">
                                         Enter some keywords (city, country, position, ...)
                                     </div>
