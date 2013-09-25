@@ -1,6 +1,18 @@
+#homepage 
 EnsJobeetBundle_homepage:
     pattern:  /
     defaults: { _controller: "EnsJobeetBundle:Job:index" }
+
+# login route
+
+login:
+    pattern:   /login
+    defaults: { _controller: "EnsJobeetBundle:Default:login" }
+        
+login_check:
+    pattern:   /login_check
+
+# Job route
 ens_job:
     pattern:  /
     defaults: { _controller: "EnsJobeetBundle:Job:index" }

@@ -7,11 +7,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Ens\JobeetBundle\Entity\Job;
 use Ens\JobeetBundle\Form\JobType;
 
+
 /**
  * Job controller.
  *
  */
 class JobController extends Controller {
+
 
     /**
      * Lists all Job entities.
